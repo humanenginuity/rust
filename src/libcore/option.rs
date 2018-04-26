@@ -146,7 +146,7 @@
 #![stable(feature = "rust1", since = "1.0.0")]
 
 use iter::{FromIterator, FusedIterator, TrustedLen};
-use {mem, ops};
+use {mem, ops::{self, Deref}};
 
 // Note that this is not a lang item per se, but it has a hidden dependency on
 // `Iterator`, which is one. The compiler assumes that the `next` method of
@@ -878,6 +878,17 @@ impl<T: Default> Option<T> {
     }
 }
 
+#[unstable(feature = "inner_deref", reason = "newly added", issue = "50264")]
+impl<T: Deref> Option<T> {
+    /// Converts from `&Option<T>` to `Option<&T::Target>`.
+    ///
+    /// Leaves the original Option in-place, creating a new one with a reference
+    /// to the original one, additionally coercing the contents via `Deref`.
+    pub fn deref(&self) -> Option<&T::Target> {
+        self.as_ref().map(|t| t.deref())
+    }
+}
+
 impl<T, E> Option<Result<T, E>> {
     /// Transposes an `Option` of a `Result` into a `Result` of an `Option`.
     ///
@@ -913,7 +924,6 @@ impl<T, E> Option<Result<T, E>> {
 fn expect_failed(msg: &str) -> ! {
     panic!("{}", msg)
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 // Trait implementations
